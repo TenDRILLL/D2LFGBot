@@ -1,0 +1,23 @@
+{
+  "name": "lfgbot",
+  "version": "1.0.0",
+  "description": "A D2 LFG Bot.",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TenDRILLL/D2LFGBot.git"
+  },
+  "author": "Ten#0010",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TenDRILLL/D2LFGBot/issues"
+  },
+  "homepage": "https://github.com/TenDRILLL/D2LFGBot#readme",
+  "dependencies": {
+    "discord.js": "^14.0.0-dev.1648166883.cedd053",
+    "enmap": "^5.8.13"
+  }
+}
