@@ -4,7 +4,8 @@ class Ready extends require("../automation/eventClass"){
     }
     exec(bot){
         console.log(`Ready, using account ${bot.user.tag}`);
-        //TODO: Load commands here.
+        //This should be commented after the first run.
+        //require("../automation/loader").createCommands(bot);
         bot.db.defer.then(()=>{
             console.log(`Database loaded, containing ${bot.db.size} guilds.`);
         });
