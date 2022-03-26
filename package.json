@@ -18,6 +18,8 @@
   "homepage": "https://github.com/TenDRILLL/D2LFGBot#readme",
   "dependencies": {
     "discord.js": "^14.0.0-dev.1648166883.cedd053",
-    "enmap": "^5.8.13"
+    "enmap": "^5.8.13",
+    "moment": "^2.29.1",
+    "moment-duration-format": "^2.3.2"
   }
 }
