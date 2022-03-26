@@ -10,3 +10,23 @@ module.exports.createEvents = (bot) => {
         }
     });
 }
+
+module.exports.createCommands = (bot) => {
+    const commands = [];
+    readdirSync("./commands/").forEach(file =>{
+        if(file.endsWith(".js")){
+            const commandFile = require(`../commands/${file}`);
+            if(commandFile instanceof require("./commandClass")){
+                const slashCommand = commandFile.get();
+                commands.push(slashCommand);
+                console.log(`Command ${slashCommand} imported.`);
+            }
+        }
+    });
+    console.log(`${commands.length} commands imported, creating slashcommands.`);
+    bot.application.commands.set(commands).then(()=>{
+        console.log("Global slashcommands set.");
+    }).catch((err)=>{
+        console.error(err);
+    });
+}
