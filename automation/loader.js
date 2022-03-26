@@ -13,7 +13,7 @@ module.exports.createEvents = (bot) => {
 
 module.exports.createCommands = (bot) => {
     const commands = [];
-    bot.commands = new Set();
+    bot.commands = new Map();
     readdirSync("./commands/").forEach(file =>{
         if(file.endsWith(".js")){
             const commandFile = require(`../commands/${file}`);
