@@ -9,6 +9,12 @@ class InteractionCreate extends require("../automation/eventClass"){
                 command.exec(interaction,bot);
             }
         }
+        if(interaction.isAutocomplete()){
+            const command = bot.commands.get(interaction.commandName);
+            if(command){
+                command.autoComplete(interaction);
+            }
+        }
     }
 }
 module.exports = new InteractionCreate();
