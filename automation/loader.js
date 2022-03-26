@@ -19,7 +19,7 @@ module.exports.createCommands = (bot) => {
             if(commandFile instanceof require("./commandClass")){
                 const slashCommand = commandFile.get();
                 commands.push(slashCommand);
-                console.log(`Command ${slashCommand} imported.`);
+                console.log(`Command ${slashCommand.name} imported.`);
             }
         }
     });
