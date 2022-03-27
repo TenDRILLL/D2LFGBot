@@ -15,6 +15,12 @@ class InteractionCreate extends require("../automation/eventClass"){
                 command.autoComplete(interaction);
             }
         }
+        if(interaction.isModalSubmit()){
+            const command = bot.commands.get(interaction.commandName);
+            if(command){
+                command.modalSubmit(interaction);
+            }
+        }
     }
 }
 module.exports = new InteractionCreate();
