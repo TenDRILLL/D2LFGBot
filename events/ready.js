@@ -3,6 +3,7 @@ class Ready extends require("../automation/eventClass"){
         super("ready",true);
     }
     exec(bot){
+        const databaseManager = require("../automation/databaseManager")
         console.log(`Ready, using account ${bot.user.tag}`);
         require("../automation/loader").createCommands(bot);
         bot.db.defer.then(()=>{
@@ -10,7 +11,8 @@ class Ready extends require("../automation/eventClass"){
         });
         bot.guilds.fetch();
         console.log(`Currently on ${bot.guilds.cache.size} guilds.`);
-        require("../automation/databaseManager").getOrCreate(bot.guilds.cache,bot);
+        databaseManager.getOrCreate(bot.guilds.cache,bot);
+        databaseManager.removeDeletedGuilds(bot);
         bot.user.setPresence({activities: [{name: `DROWN DROWN DROWN`}], status: `online`});
         setInterval(()=>{
             bot.user.setPresence({activities: [{name: `DROWN DROWN DROWN`}], status: `online`});
