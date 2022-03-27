@@ -12,7 +12,7 @@ class InteractionCreate extends require("../automation/eventClass"){
         if(interaction.isAutocomplete()){
             const command = bot.commands.get(interaction.commandName);
             if(command){
-                command.autoComplete(interaction);
+                command.autocomplete(interaction);
             }
         }
         if(interaction.isModalSubmit()){

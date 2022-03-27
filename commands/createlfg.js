@@ -25,7 +25,7 @@ class CreateLFG extends require("../automation/commandClass"){
             );
         interaction.showModal(modal);
     }
-    autoComplete(interaction){
+    autocomplete(interaction){
         const focusedValue = interaction.options.getFocused(true);
         let filteredValues;
         if(focusedValue.name === "type"){
