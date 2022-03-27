@@ -10,7 +10,7 @@ class Ready extends require("../automation/eventClass"){
         });
         bot.guilds.fetch();
         console.log(`Currently on ${bot.guilds.cache.size} guilds.`);
-        require("../automation/checkDB").exec(bot.guilds.cache,bot);
+        require("../automation/databaseManager").getOrCreate(bot.guilds.cache,bot);
         bot.user.setPresence({activities: [{name: `DROWN DROWN DROWN`}], status: `online`});
         setInterval(()=>{
             bot.user.setPresence({activities: [{name: `DROWN DROWN DROWN`}], status: `online`});
