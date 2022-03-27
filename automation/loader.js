@@ -5,7 +5,7 @@ module.exports.createEvents = (bot) => {
         if(file.endsWith(".js")){
             const eventFile = require(`../events/${file}`);
             if(eventFile instanceof require("./eventClass")){
-                eventFile.isRunOnce() ? bot.once(eventFile.getEventName(), (...args) => eventFile.exec(...args, bot)) : bot.on(eventFile.getEventName(), (...args) => eventFile.exec(...args, bot));
+                bot[eventFile.isRunOnce() ? "once" : "on"](eventFile.getEventName(),(...args) => eventFile.exec(...args, bot));
             }
         }
     });
