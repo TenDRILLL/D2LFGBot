@@ -33,7 +33,6 @@ module.exports.deleteOldPosts = (bot) => {
                     guild.posts.delete(post.messageID);
                     message.delete().catch(e => {console.log(e)});
                     bot.db.set(guild.id,guild);
-                } else {
                 }
             } else {
                 guild.posts.delete(post.messageID);
