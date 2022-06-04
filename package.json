@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/TenDRILLL/D2LFGBot#readme",
   "dependencies": {
+    "any-date-parser": "^1.5.3",
     "discord.js": "^14.0.0-dev.1649505803-3c0bbac",
     "enmap": "^5.8.13",
     "moment": "^2.29.1",

@@ -1,9 +1,9 @@
 {
   "activity": ["Raid", "Dungeon", "Crucible", "Gambit", "Seasonal", "Other"],
   "Raid": ["Vow of the Disciple","Vault of Glass","Deep Stone Crypt","Garden of Salvation","Last Wish"],
-  "Dungeon": ["Grasp of Avarice","Prophecy","Pit of Heresy","Shattered Throne"],
+  "Dungeon": ["Duality","Grasp of Avarice","Prophecy","Pit of Heresy","Shattered Throne"],
   "Crucible": ["Control","Competitive","Iron Banner","Trials of Osiris","Casual","Private Crucible Match"],
   "Gambit": ["Gambit","Private Gambit Match"],
-  "Seasonal": ["PsiOps","Legend PsiOps"],
+  "Seasonal": ["Nightmare Containment","PsiOps","Legend PsiOps"],
   "Other": ["Wellspring","Master Wellspring","Other"]
 }
