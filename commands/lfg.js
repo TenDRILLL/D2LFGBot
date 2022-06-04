@@ -40,7 +40,7 @@ class Lfg extends require("../automation/commandClass"){
                 .setCustomId(`lfg-${lfgOptions["activity"].indexOf(type)}-${lfgOptions[type].indexOf(activity)}`)
                 .addComponents([
                     new ActionRowBuilder().addComponents([new TextInputBuilder().setCustomId("lfg-size").setLabel("Size of the fireteam").setStyle(TextInputStyle.Short)]),
-                    new ActionRowBuilder().addComponents([new TextInputBuilder().setCustomId("lfg-time").setLabel("Time [Format: DD.MM HH:MM]").setStyle(TextInputStyle.Short)]),
+                    new ActionRowBuilder().addComponents([new TextInputBuilder().setCustomId("lfg-time").setLabel("Time [Format: DD.MM HH:MM (TZ)]").setStyle(TextInputStyle.Short)]),
                     new ActionRowBuilder().addComponents([new TextInputBuilder().setCustomId("lfg-desc").setLabel("Description").setStyle(TextInputStyle.Paragraph)])
                 ]);
             interaction.showModal(modal);
@@ -67,11 +67,9 @@ class Lfg extends require("../automation/commandClass"){
         const indexes = interaction.customId.split("-");
         const activity = lfgOptions[lfgOptions["activity"][indexes[1]]][indexes[2]];
         const size = interaction.fields.getTextInputValue("lfg-size");
-        const time = parser.fromString(interaction.fields.getTextInputValue("lfg-time"),"FI-fi");
+        const time = parser.fromString(`${interaction.fields.getTextInputValue("lfg-time")}:00 EEST`);
         if(time["invalid"]) return;
         time.setFullYear(new Date().getFullYear());
-        let hours = time.getHours() - 3;
-        if(hours < 0) hours = 24 - hours * -1;
         time.setHours(hours);
         const embed = new EmbedBuilder().addFields([
             {name: "**Activity:**", value: activity, inline: true},
