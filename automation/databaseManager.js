@@ -27,7 +27,6 @@ module.exports.deleteOldPosts = (bot) => {
     bot.db.forEach(guild => {
         guild.posts.forEach(async post => {
             const message = await bot.channels.cache.get(post.channelID).messages.fetch(post.messageID).catch(e => console.log(e));
-            console.log(message);
             if(message){
                 if(post.timestamp - new Date().getTime() <= 1000*60*5){
                     guild.posts.delete(post.messageID);
