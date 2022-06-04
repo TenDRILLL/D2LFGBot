@@ -30,19 +30,27 @@ class Lfg extends require("../automation/commandClass"){
         });
     }
     exec(interaction,bot){
-        const type = interaction.options.get("type").value;
-        const activity = interaction.options.get("activity").value;
-        if(!lfgOptions["activity"].includes(type)) return interaction.reply({content: `${type} is not a valid ActivityType.`});
-        if(!lfgOptions[type].includes(activity)) return interaction.reply({content: `${activity} is not a valid \`${type}\`.`});
-        const modal = new ModalBuilder()
-            .setTitle("LFG Creation")
-            .setCustomId(`lfg-${lfgOptions["activity"].indexOf(type)}-${lfgOptions[type].indexOf(activity)}`)
-            .addComponents(
-                new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId("lfg-size").setLabel("Size of the fireteam").setStyle(TextInputStyle.Short)),
-                new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId("lfg-time").setLabel("Time [Format: DD.MM HH:MM]").setStyle(TextInputStyle.Short)),
-                new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId("lfg-desc").setLabel("Description").setStyle(TextInputStyle.Paragraph))
-            );
-        interaction.showModal(modal);
+        if(interaction.options.getSubcommand() === "create"){
+            const type = interaction.options.get("type").value;
+            const activity = interaction.options.get("activity").value;
+            if(!lfgOptions["activity"].includes(type)) return interaction.reply({content: `${type} is not a valid ActivityType.`});
+            if(!lfgOptions[type].includes(activity)) return interaction.reply({content: `${activity} is not a valid \`${type}\`.`});
+            const modal = new ModalBuilder()
+                .setTitle("LFG Creation")
+                .setCustomId(`lfg-${lfgOptions["activity"].indexOf(type)}-${lfgOptions[type].indexOf(activity)}`)
+                .addComponents([
+                    new ActionRowBuilder().addComponents([new TextInputBuilder().setCustomId("lfg-size").setLabel("Size of the fireteam").setStyle(TextInputStyle.Short)]),
+                    new ActionRowBuilder().addComponents([new TextInputBuilder().setCustomId("lfg-time").setLabel("Time [Format: DD.MM HH:MM]").setStyle(TextInputStyle.Short)]),
+                    new ActionRowBuilder().addComponents([new TextInputBuilder().setCustomId("lfg-desc").setLabel("Description").setStyle(TextInputStyle.Paragraph)])
+                ]);
+            interaction.showModal(modal);
+        } else if(interaction.options.getSubcommand() === "edit"){
+
+        } else if(interaction.options.getSubcommand() === "join"){
+
+        } else if(interaction.options.getSubcommand() === "leave"){
+
+        }
     }
     autocomplete(interaction){
         const focusedValue = interaction.options.getFocused(true);
@@ -65,14 +73,14 @@ class Lfg extends require("../automation/commandClass"){
         let hours = time.getHours() - 3;
         if(hours < 0) hours = 24 - hours * -1;
         time.setHours(hours);
-        const embed = new EmbedBuilder().addFields(
+        const embed = new EmbedBuilder().addFields([
             {name: "**Activity:**", value: activity, inline: true},
-            {name: "**Start Time:**", value: `<t:${Math.floor(time.getTime()/1000)}:f>
+            {name: "**Start Time:**", value: `<t:${Math.floor(time.getTime()/1000)}:F>
 <t:${Math.floor(time.getTime()/1000)}:R>`, inline: true},
             {name: "**Description:**", value: interaction.fields.getTextInputValue("lfg-desc")},
             {name: `**Guardians Joined: 1/${size}**`, value: interaction.user.tag, inline: true},
             {name: "**Alternatives:**", value: "None.", inline: true}
-        ).setFooter({text: `Creator | ${interaction.user.tag}`});
+        ]).setFooter({text: `Creator: ${interaction.user.tag}`});
         interaction.reply({embeds: [embed]}).then(async () => {
             const reply = await interaction.fetchReply();
             const joinButton = new ButtonBuilder()
@@ -87,8 +95,10 @@ class Lfg extends require("../automation/commandClass"){
                 .setLabel("Delete")
                 .setStyle(ButtonStyle.Danger)
                 .setCustomId(`lfg-delete-${reply.id}-${interaction.user.id}`)
-            const row = new ActionRowBuilder().setComponents(joinButton,leaveButton,deleteButton);
-            interaction.editReply({embeds: reply.embeds, components: [row]}).then(()=>{
+            const row = new ActionRowBuilder().setComponents([joinButton,leaveButton,deleteButton]);
+            const embed = EmbedBuilder.from(reply.embeds[0]);
+            embed.setFooter({text: `Creator: ${interaction.user.tag} | ID: ${reply.id}`});
+            interaction.editReply({embeds: [embed], components: [row]}).then(()=>{
                 interaction.fetchReply().then(reply => {
                     const posts = bot.db.get(interaction.guild.id).posts;
                     posts.set(reply.id,{
@@ -133,8 +143,8 @@ class Lfg extends require("../automation/commandClass"){
                         }
                     }
                 }
-                newEmbed.addFields({value: guardians.join(", "), name: `**Guardians Joined: ${guardians.length}/${size}`, inline: true});
-                newEmbed.addFields({value: alternatives.join(", "), name: `**Alternatives**`, inline: true});
+                newEmbed.addFields([{value: guardians.join(", "), name: `**Guardians Joined: ${guardians.length}/${size}`, inline: true}]);
+                newEmbed.addFields([{value: alternatives.join(", "), name: `**Alternatives**`, inline: true}]);
                 m.edit({embeds: [newEmbed]});
                 ic.deferUpdate();
             });
@@ -156,8 +166,8 @@ class Lfg extends require("../automation/commandClass"){
                 } else {
                     return ic.reply({content: "You're not in this LFG.", ephemeral: true});
                 }
-                newEmbed.addFields({value: guardians.length > 0 ? guardians.join(", ") : "None.", name: `**Guardians Joined: ${guardians[0] !== "None." ? guardians.length : "0"}/${size}`, inline: true});
-                newEmbed.addFields({value: alternatives.length > 0 ? alternatives.join(", ") : "None.", name: `**Alternatives**`, inline: true});
+                newEmbed.addFields([{value: guardians.length > 0 ? guardians.join(", ") : "None.", name: `**Guardians Joined: ${guardians[0] !== "None." ? guardians.length : "0"}/${size}`, inline: true}]);
+                newEmbed.addFields([{value: alternatives.length > 0 ? alternatives.join(", ") : "None.", name: `**Alternatives**`, inline: true}]);
                 m.edit({embeds: [newEmbed]});
                 ic.deferUpdate();
             });
