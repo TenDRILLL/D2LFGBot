@@ -67,10 +67,16 @@ class Lfg extends require("../automation/commandClass"){
         const indexes = interaction.customId.split("-");
         const activity = lfgOptions[lfgOptions["activity"][indexes[1]]][indexes[2]];
         const size = interaction.fields.getTextInputValue("lfg-size");
-        const time = parser.fromString(`${interaction.fields.getTextInputValue("lfg-time")}:00 EEST`);
+        let timeString = interaction.fields.getTextInputValue("lfg-time");
+        if(timeString.split(" ").length === 1){
+            const now = new Date();
+            timeString = `${now.getDay()}.${now.getMonth()} ${timeString} EEST`;
+        } else if(timeString.split(" ").length === 2){
+            timeString = timeString + " EEST";
+        }
+        const time = parser.fromString(timeString);
         if(time["invalid"]) return;
         time.setFullYear(new Date().getFullYear());
-        time.setHours(hours);
         const embed = new EmbedBuilder().addFields([
             {name: "**Activity:**", value: activity, inline: true},
             {name: "**Start Time:**", value: `<t:${Math.floor(time.getTime()/1000)}:F>
