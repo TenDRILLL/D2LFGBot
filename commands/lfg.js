@@ -7,18 +7,26 @@ const {
     TextInputStyle,
     EmbedBuilder,
     ButtonBuilder,
-    ButtonStyle
+    ButtonStyle,
+    PermissionsBitField
 } = require("discord.js");
 const parser = require("any-date-parser");
-class CreateLFG extends require("../automation/commandClass"){
+class Lfg extends require("../automation/commandClass"){
     constructor() {
         super({
-            name: "createlfg",
-            description: "Create an LFG",
+            name: "lfg",
+            description: "Access LFG commands.",
             options: [
-                {name:"type", description: "Type of an activity to create an LFG for.", type: ApplicationCommandOptionType.String, autocomplete: true, required: true},
-                {name:"activity", description: "The activity to create an LFG for.", type: ApplicationCommandOptionType.String, autocomplete: true, required: true},
-            ]
+                {
+                    name: "create",
+                    description: "Create an LFG.",
+                    type: ApplicationCommandOptionType.Subcommand,
+                    options: [
+                        {name:"type", description: "Type of an activity to create an LFG for.", type: ApplicationCommandOptionType.String, autocomplete: true, required: true},
+                        {name:"activity", description: "The activity to create an LFG for.", type: ApplicationCommandOptionType.String, autocomplete: true, required: true},
+                    ]
+                }
+            ],
         });
     }
     exec(interaction,bot){
@@ -28,9 +36,9 @@ class CreateLFG extends require("../automation/commandClass"){
         if(!lfgOptions[type].includes(activity)) return interaction.reply({content: `${activity} is not a valid \`${type}\`.`});
         const modal = new ModalBuilder()
             .setTitle("LFG Creation")
-            .setCustomId(`createlfg-${lfgOptions["activity"].indexOf(type)}-${lfgOptions[type].indexOf(activity)}`)
+            .setCustomId(`lfg-${lfgOptions["activity"].indexOf(type)}-${lfgOptions[type].indexOf(activity)}`)
             .addComponents(
-                new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId("lfg-size").setLabel("How many Guardians are you looking for?").setStyle(TextInputStyle.Short)),
+                new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId("lfg-size").setLabel("Size of the fireteam").setStyle(TextInputStyle.Short)),
                 new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId("lfg-time").setLabel("Time [Format: DD.MM HH:MM]").setStyle(TextInputStyle.Short)),
                 new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId("lfg-desc").setLabel("Description").setStyle(TextInputStyle.Paragraph))
             );
@@ -47,19 +55,19 @@ class CreateLFG extends require("../automation/commandClass"){
         }
         interaction.respond(filteredValues.map(choice => ({name: choice, value: choice})));
     }
-    modalSubmit(interaction){
+    modalSubmit(interaction,bot){
         const indexes = interaction.customId.split("-");
         const activity = lfgOptions[lfgOptions["activity"][indexes[1]]][indexes[2]];
         const size = interaction.fields.getTextInputValue("lfg-size");
-        const time = parser.fromString(interaction.fields.getTextInputValue("lfg-time"));
-        try{
-            time.setFullYear(new Date().getFullYear());
-        } catch(e){
-            console.log(e);
-        }
+        const time = parser.fromString(interaction.fields.getTextInputValue("lfg-time"),"FI-fi");
+        if(time["invalid"]) return;
+        time.setFullYear(new Date().getFullYear());
+        let hours = time.getHours() - 3;
+        if(hours < 0) hours = 24 - hours * -1;
+        time.setHours(hours);
         const embed = new EmbedBuilder().addFields(
             {name: "**Activity:**", value: activity, inline: true},
-            {name: "**Start Time:**", value: `<t:${Math.floor(time.getTime()/1000)}>
+            {name: "**Start Time:**", value: `<t:${Math.floor(time.getTime()/1000)}:f>
 <t:${Math.floor(time.getTime()/1000)}:R>`, inline: true},
             {name: "**Description:**", value: interaction.fields.getTextInputValue("lfg-desc")},
             {name: `**Guardians Joined: 1/${size}**`, value: interaction.user.tag, inline: true},
@@ -70,13 +78,28 @@ class CreateLFG extends require("../automation/commandClass"){
             const joinButton = new ButtonBuilder()
                 .setLabel("Join")
                 .setStyle(ButtonStyle.Success)
-                .setCustomId(`createlfg-join-${reply.id}`);
+                .setCustomId(`lfg-join-${reply.id}`);
             const leaveButton = new ButtonBuilder()
                 .setLabel("Leave")
                 .setStyle(ButtonStyle.Danger)
-                .setCustomId(`createlfg-leave-${reply.id}`);
-            const row = new ActionRowBuilder().setComponents(joinButton,leaveButton);
-            interaction.editReply({embeds: reply.embeds, components: [row]});
+                .setCustomId(`lfg-leave-${reply.id}`);
+            const deleteButton = new ButtonBuilder()
+                .setLabel("Delete")
+                .setStyle(ButtonStyle.Danger)
+                .setCustomId(`lfg-delete-${reply.id}-${interaction.user.id}`)
+            const row = new ActionRowBuilder().setComponents(joinButton,leaveButton,deleteButton);
+            interaction.editReply({embeds: reply.embeds, components: [row]}).then(()=>{
+                interaction.fetchReply().then(reply => {
+                    const posts = bot.db.get(interaction.guild.id).posts;
+                    posts.set(reply.id,{
+                       guildID: interaction.guild.id,
+                       channelID: interaction.channel.id,
+                       messageID: reply.id,
+                       timestamp: time.getTime()
+                    });
+                    bot.db.set(interaction.guild.id,posts,"posts");
+                });
+            });
         });
     }
 
@@ -138,7 +161,19 @@ class CreateLFG extends require("../automation/commandClass"){
                 m.edit({embeds: [newEmbed]});
                 ic.deferUpdate();
             });
+        } else if(action === "delete"){
+            if(ic.user.id !== ic.customId.split("-")[3] && !ic.member.permissions.has(PermissionsBitField.resolve("ManageMessages"),true)) return ic.reply({content: "You aren't allowed to delete this post.", ephemeral: true});
+            ic.channel.messages.fetch(ic.customId.split("-")[2]).then(m => {
+                if(bot.db.get(ic.guild.id)[ic.customId.split("-")[2]] !== null){
+                    const posts = bot.db.get(ic.guild.id).posts;
+                    posts.delete(ic.customId.split("-")[2]);
+                    bot.db.set(ic.guild.id,posts,"posts");
+                }
+                m.delete().then(()=>{
+                    ic.reply({content: "Deleted.", ephemeral: true});
+                }).catch(e => console.log(e));
+            });
         }
     }
 }
-module.exports = new CreateLFG();
+module.exports = new Lfg();

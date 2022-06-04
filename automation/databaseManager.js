@@ -5,7 +5,7 @@ module.exports.getOrCreate = (guilds, bot) => {
         } else {
             const settings = {
                 id: guild.id,
-                posts: new Set()
+                posts: new Map()
             }
             bot.db.set(guild.id,settings);
             console.log(`Guild ${guild.id} created.`);
@@ -14,9 +14,31 @@ module.exports.getOrCreate = (guilds, bot) => {
 }
 
 module.exports.removeDeletedGuilds = (bot) => {
+    bot.guilds.fetch().then(()=>{
+        bot.db.forEach(guild => {
+            if(!bot.guilds.cache.get(guild.id)){
+                bot.db.delete(guild.id);
+            }
+        });
+    });
+}
+
+module.exports.deleteOldPosts = (bot) => {
     bot.db.forEach(guild => {
-        if(!bot.guilds.cache.get(guild.id)){
-            bot.db.delete(guild.id);
-        }
+        guild.posts.forEach(async post => {
+            const message = await bot.channels.cache.get(post.channelID).messages.fetch(post.messageID).catch(e => console.log(e));
+            console.log(message);
+            if(message){
+                if(post.timestamp - new Date().getTime() <= 1000*60*5){
+                    guild.posts.delete(post.messageID);
+                    message.delete().catch(e => {console.log(e)});
+                    bot.db.set(guild.id,guild);
+                } else {
+                }
+            } else {
+                guild.posts.delete(post.messageID);
+                bot.db.set(guild.id,guild);
+            }
+        });
     });
 }

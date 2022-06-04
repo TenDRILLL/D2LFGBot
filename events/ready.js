@@ -17,6 +17,9 @@ class Ready extends require("../automation/eventClass"){
         setInterval(()=>{
             bot.user.setPresence({activities: [{name: `DROWN DROWN DROWN`}], status: `online`});
         },1000*60*30);
+        setInterval(()=>{
+            databaseManager.deleteOldPosts(bot);
+        },1000*60*5);
     }
 }
 module.exports = new Ready();

@@ -18,7 +18,7 @@ class InteractionCreate extends require("../automation/eventClass"){
         if(interaction.isModalSubmit()){
             const command = bot.commands.get(interaction.customId.split("-")[0]);
             if(command){
-                command.modalSubmit(interaction);
+                command.modalSubmit(interaction,bot);
             }
         }
         if(interaction.isButton()){
