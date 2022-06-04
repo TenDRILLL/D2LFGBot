@@ -70,9 +70,11 @@ class Lfg extends require("../automation/commandClass"){
         let timeString = interaction.fields.getTextInputValue("lfg-time");
         if(timeString.split(" ").length === 1){
             const now = new Date();
-            timeString = `${now.getDay()}.${now.getMonth()} ${timeString} EEST`;
+            timeString = `${now.getDay()}.${now.getMonth()} ${timeString}:00 EEST`;
         } else if(timeString.split(" ").length === 2){
-            timeString = timeString + " EEST";
+            timeString = timeString + ":00 EEST";
+        } else {
+            timeString = timeString.split(":").join(":00:");
         }
         const time = parser.fromString(timeString);
         if(time["invalid"]) return;
