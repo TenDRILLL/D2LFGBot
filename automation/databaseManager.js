@@ -52,7 +52,7 @@ module.exports.createTimers = (bot) => {
                     bot.users.fetch(user).then(u => {
                         u.send({content: `Get ready for ${post.activity} <t:${Math.floor(post.timestamp/1000)}:R> with
 ${post.members.map(x => `<@${x}>`).join("\n")}
-Link to LFG: ${post.url}`});
+Link to LFG: ${post.url}`}).catch(e => console.log(e));
                     });
                     const message = await bot.channels.cache.get(post.channelID).messages.fetch(post.messageID).catch(e => console.log(e));
                     if(message){
@@ -74,7 +74,7 @@ module.exports.createTimer = (post,bot) => {
             bot.users.fetch(user).then(u => {
                 u.send({content: `Get ready for ${post.activity} <t:${Math.floor(post.timestamp/1000)}:R> with
 ${post.members.map(x => `<@${x}>`).join("\n")}
-Link to LFG: ${post.url}`});
+Link to LFG: ${post.url}`}).catch(e => console.log(e));
             });
             const message = await bot.channels.cache.get(post.channelID).messages.fetch(post.messageID).catch(e => console.log(e));
             if(message){
