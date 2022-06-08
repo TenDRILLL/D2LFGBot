@@ -11,6 +11,7 @@ const {
     PermissionsBitField
 } = require("discord.js");
 const parser = require("any-date-parser");
+const databaseManager = require("../automation/databaseManager");
 class Lfg extends require("../automation/commandClass"){
     constructor() {
         super({
@@ -84,9 +85,9 @@ class Lfg extends require("../automation/commandClass"){
             {name: "**Start Time:**", value: `<t:${Math.floor(time.getTime()/1000)}:F>
 <t:${Math.floor(time.getTime()/1000)}:R>`, inline: true},
             {name: "**Description:**", value: interaction.fields.getTextInputValue("lfg-desc")},
-            {name: `**Guardians Joined: 1/${size}**`, value: interaction.user.tag, inline: true},
+            {name: `**Guardians Joined: 1/${size}**`, value: interaction.member.nickname ?? interaction.user.tag, inline: true},
             {name: "**Alternatives:**", value: "None.", inline: true}
-        ]).setFooter({text: `Creator: ${interaction.user.tag}`});
+        ]).setFooter({text: `Creator: ${interaction.member.nickname ?? interaction.user.tag}`});
         interaction.reply({embeds: [embed]}).then(async () => {
             const reply = await interaction.fetchReply();
             const joinButton = new ButtonBuilder()
@@ -103,17 +104,23 @@ class Lfg extends require("../automation/commandClass"){
                 .setCustomId(`lfg-delete-${reply.id}-${interaction.user.id}`)
             const row = new ActionRowBuilder().setComponents([joinButton,leaveButton,deleteButton]);
             const embed = EmbedBuilder.from(reply.embeds[0]);
-            embed.setFooter({text: `Creator: ${interaction.user.tag} | ID: ${reply.id}`});
+            embed.setFooter({text: `Creator: ${interaction.member.nickname ?? interaction.user.tag} | ID: ${reply.id}`});
             interaction.editReply({embeds: [embed], components: [row]}).then(()=>{
                 interaction.fetchReply().then(reply => {
                     const posts = bot.db.get(interaction.guild.id).posts;
-                    posts.set(reply.id,{
-                       guildID: interaction.guild.id,
-                       channelID: interaction.channel.id,
-                       messageID: reply.id,
-                       timestamp: time.getTime()
-                    });
+                    const post = {
+                        activity: activity,
+                        guildID: interaction.guild.id,
+                        channelID: interaction.channel.id,
+                        messageID: reply.id,
+                        url: reply.url,
+                        timestamp: time.getTime(),
+                        members: [interaction.user.id],
+                        alts: []
+                    };
+                    posts.set(reply.id,post);
                     bot.db.set(interaction.guild.id,posts,"posts");
+                    databaseManager.createTimer(post,bot);
                 });
             });
         });
@@ -121,6 +128,10 @@ class Lfg extends require("../automation/commandClass"){
 
     handleLFG(ic, bot){
         const action = ic.customId.split("-")[1];
+        const posts = bot.db.get(ic.guild.id).posts;
+        const post = posts.get(ic.customId.split("-")[2]);
+        const fireteam = post.members;
+        const alts = post.alts;
         if(action === "join"){
             ic.channel.messages.fetch(ic.customId.split("-")[2]).then(m => {
                 const lfgEmbed = m.embeds[0];
@@ -129,23 +140,25 @@ class Lfg extends require("../automation/commandClass"){
                 const guardians = lfgEmbed.fields.pop().value.split(", ");
                 const newEmbed = EmbedBuilder.from(lfgEmbed);
                 if(guardians.length === 6){
-                    if(alternatives.includes(ic.user.tag)){
+                    if(alts.includes(ic.user.id)){
                         return ic.reply({content: "You're already in this LFG.", ephemeral: true});
                     } else {
+                        alts.push(ic.user.tag);
                         if(alternatives[0] === "None."){
-                            alternatives[0] = ic.user.tag;
+                            alternatives[0] = ic.member.nickname ?? ic.user.tag;
                         } else {
-                            alternatives.push(ic.user.tag);
+                            alternatives.push(ic.member.nickname ?? ic.user.tag);
                         }
                     }
                 } else {
-                    if(guardians.includes(ic.user.tag)){
+                    if(fireteam.includes(ic.user.id)){
                         return ic.reply({content: "You're already in this LFG.", ephemeral: true});
                     } else {
+                        fireteam.push(ic.user.id);
                         if(guardians[0] === "None."){
-                            guardians[0] = ic.user.tag;
+                            guardians[0] = ic.member.nickname ?? ic.user.tag;
                         } else {
-                            guardians.push(ic.user.tag);
+                            guardians.push(ic.member.nickname ?? ic.user.tag);
                         }
                     }
                 }
@@ -153,6 +166,7 @@ class Lfg extends require("../automation/commandClass"){
                 newEmbed.addFields([{value: alternatives.join(", "), name: `**Alternatives**`, inline: true}]);
                 m.edit({embeds: [newEmbed]});
                 ic.deferUpdate();
+                bot.db.set(ic.guild.id,posts,"posts");
             });
         } else if(action === "leave"){
             ic.channel.messages.fetch(ic.customId.split("-")[2]).then(m => {
@@ -161,13 +175,19 @@ class Lfg extends require("../automation/commandClass"){
                 const alternatives = lfgEmbed.fields.pop().value.split(", ");
                 const guardians = lfgEmbed.fields.pop().value.split(", ");
                 const newEmbed = EmbedBuilder.from(lfgEmbed);
-                if(alternatives.includes(ic.user.tag)){
-                    alternatives.splice(alternatives.indexOf(ic.user.tag),1);
-                } else if(guardians.includes(ic.user.tag)){
-                    guardians.splice(guardians.indexOf(ic.user.tag),1);
+                if(alts.includes(ic.user.id)){
+                    alts.splice(fireteam.indexOf(ic.user.id),1);
+                    const name = ic.member.nickname ?? ic.user.tag;
+                    alternatives.splice(alternatives.indexOf(name),1);
+                } else if(fireteam.includes(ic.user.id)){
+                    const name = ic.member.nickname ?? ic.user.tag;
+                    guardians.splice(guardians.indexOf(name),1);
+                    fireteam.splice(fireteam.indexOf(ic.user.id),1);
                     if(alternatives.length > 0 && alternatives[0] !== "None."){
+                        const moveAlts = alts.splice(0,1);
                         const moveGuardian = alternatives.splice(0,1);
                         guardians.push(moveGuardian);
+                        fireteam.push(moveAlts);
                     }
                 } else {
                     return ic.reply({content: "You're not in this LFG.", ephemeral: true});
@@ -176,6 +196,7 @@ class Lfg extends require("../automation/commandClass"){
                 newEmbed.addFields([{value: alternatives.length > 0 ? alternatives.join(", ") : "None.", name: `**Alternatives**`, inline: true}]);
                 m.edit({embeds: [newEmbed]});
                 ic.deferUpdate();
+                bot.db.set(ic.guild.id,posts,"posts");
             });
         } else if(action === "delete"){
             console.log(`${ic.user.tag} attempted deletion.`);

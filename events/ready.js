@@ -20,6 +20,7 @@ class Ready extends require("../automation/eventClass"){
         setInterval(()=>{
             databaseManager.deleteOldPosts(bot);
         },1000*60*5);
+        databaseManager.createTimers(bot);
     }
 }
 module.exports = new Ready();
