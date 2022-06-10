@@ -166,6 +166,7 @@ class Lfg extends require("../automation/commandClass"){
                 newEmbed.addFields([{value: alternatives.join(", "), name: `**Alternatives**`, inline: true}]);
                 m.edit({embeds: [newEmbed]});
                 ic.deferUpdate();
+                posts.set(post.messageID,post);
                 bot.db.set(ic.guild.id,posts,"posts");
             });
         } else if(action === "leave"){
@@ -196,6 +197,7 @@ class Lfg extends require("../automation/commandClass"){
                 newEmbed.addFields([{value: alternatives.length > 0 ? alternatives.join(", ") : "None.", name: `**Alternatives**`, inline: true}]);
                 m.edit({embeds: [newEmbed]});
                 ic.deferUpdate();
+                posts.set(post.messageID,post);
                 bot.db.set(ic.guild.id,posts,"posts");
             });
         } else if(action === "delete"){
@@ -206,8 +208,7 @@ Is creator: ${ic.user.id === ic.customId.split("-")[3]}
 Has ManageMessages or Admin: ${ic.member.permissions.has(PermissionsBitField.resolve("ManageMessages"),true)}`);
             ic.channel.messages.fetch(ic.customId.split("-")[2]).then(m => {
                 if(bot.db.get(ic.guild.id)[ic.customId.split("-")[2]] !== null){
-                    const posts = bot.db.get(ic.guild.id).posts;
-                    posts.delete(ic.customId.split("-")[2]);
+                    posts.delete(post.messageID);
                     bot.db.set(ic.guild.id,posts,"posts");
                 }
                 m.delete().then(()=>{
