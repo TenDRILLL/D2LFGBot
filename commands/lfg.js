@@ -31,7 +31,7 @@ class Lfg extends require("../automation/commandClass"){
         });
     }
     exec(interaction,bot){
-        //TODO: Check if nickname ends with #DDDD
+        if(!(/#\d{4}/.test(interaction.displayName))) return interaction.reply({content: "You haven't changed your name to contain your Destiny name, in the format of Name#0000", ephemeral: true});
         if(interaction.options.getSubcommand() === "create"){
             const type = interaction.options.get("type").value;
             const activity = interaction.options.get("activity").value;
@@ -128,7 +128,7 @@ class Lfg extends require("../automation/commandClass"){
     }
 
     async handleLFG(ic, bot){
-        //TODO: Check if nickname ends with #DDDD
+        if(!(/#\d{4}/.test(ic.displayName))) return ic.reply({content: "You haven't changed your name to contain your Destiny name, in the format of Name#0000", ephemeral: true});
         const action = ic.customId.split("-")[1];
         const posts = bot.db.get(ic.guild.id).posts;
         const post = posts.get(ic.customId.split("-")[2]);
@@ -217,7 +217,7 @@ Has ManageMessages or Admin: ${ic.member.permissions.has(PermissionsBitField.res
     resolveName(guild,id){
         return new Promise((res,rej)=>{
             guild.members.fetch(id).then(member => {
-                res(member.nickname ?? member.user.tag);
+                res(member.displayName);
             }).catch(e => {
                 rej(e);
             });
