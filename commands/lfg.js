@@ -31,6 +31,7 @@ class Lfg extends require("../automation/commandClass"){
         });
     }
     exec(interaction,bot){
+        //TODO: Check if nickname ends with #DDDD
         if(interaction.options.getSubcommand() === "create"){
             const type = interaction.options.get("type").value;
             const activity = interaction.options.get("activity").value;
@@ -126,96 +127,101 @@ class Lfg extends require("../automation/commandClass"){
         });
     }
 
-    handleLFG(ic, bot){
+    async handleLFG(ic, bot){
+        //TODO: Check if nickname ends with #DDDD
         const action = ic.customId.split("-")[1];
         const posts = bot.db.get(ic.guild.id).posts;
         const post = posts.get(ic.customId.split("-")[2]);
         const fireteam = post.members;
         const alts = post.alts;
+
+        const m = await ic.channel.messages.fetch(ic.customId.split("-")[2]);
+        const lfgEmbed = m.embeds[0];
+        const size = lfgEmbed.fields[3].name.split("/")[1].split("**")[0];
+        const alternatives = lfgEmbed.fields.pop().value.split(", ");
+        const guardians = lfgEmbed.fields.pop().value.split(", ");
+        const newEmbed = EmbedBuilder.from(lfgEmbed);
         if(action === "join"){
-            ic.channel.messages.fetch(ic.customId.split("-")[2]).then(m => {
-                const lfgEmbed = m.embeds[0];
-                const size = lfgEmbed.fields[3].name.split("/")[1];
-                const alternatives = lfgEmbed.fields.pop().value.split(", ");
-                const guardians = lfgEmbed.fields.pop().value.split(", ");
-                const newEmbed = EmbedBuilder.from(lfgEmbed);
-                if(guardians.length === size){
-                    if(alts.includes(ic.user.id)){
-                        return ic.reply({content: "You're already in this LFG.", ephemeral: true});
-                    } else {
-                        alts.push(ic.user.tag);
-                        if(alternatives[0] === "None."){
-                            alternatives[0] = ic.member.nickname ?? ic.user.tag;
-                        } else {
-                            alternatives.push(ic.member.nickname ?? ic.user.tag);
-                        }
-                    }
-                } else {
-                    if(fireteam.includes(ic.user.id)){
-                        return ic.reply({content: "You're already in this LFG.", ephemeral: true});
-                    } else {
-                        fireteam.push(ic.user.id);
-                        if(guardians[0] === "None."){
-                            guardians[0] = ic.member.nickname ?? ic.user.tag;
-                        } else {
-                            guardians.push(ic.member.nickname ?? ic.user.tag);
-                        }
-                    }
-                }
-                newEmbed.addFields([{value: guardians.join(", "), name: `**Guardians Joined: ${guardians.length}/${size}`, inline: true}]);
-                newEmbed.addFields([{value: alternatives.join(", "), name: `**Alternatives**`, inline: true}]);
-                m.edit({embeds: [newEmbed]});
-                ic.deferUpdate();
-                posts.set(post.messageID,post);
-                bot.db.set(ic.guild.id,posts,"posts");
-            });
-        } else if(action === "leave"){
-            ic.channel.messages.fetch(ic.customId.split("-")[2]).then(m => {
-                const lfgEmbed = m.embeds[0];
-                const size = lfgEmbed.fields[3].name.split("/")[1];
-                const alternatives = lfgEmbed.fields.pop().value.split(", ");
-                const guardians = lfgEmbed.fields.pop().value.split(", ");
-                const newEmbed = EmbedBuilder.from(lfgEmbed);
+            if(fireteam.length === parseInt(size)){
                 if(alts.includes(ic.user.id)){
-                    alts.splice(fireteam.indexOf(ic.user.id),1);
-                    const name = ic.member.nickname ?? ic.user.tag;
-                    alternatives.splice(alternatives.indexOf(name),1);
-                } else if(fireteam.includes(ic.user.id)){
-                    const name = ic.member.nickname ?? ic.user.tag;
-                    guardians.splice(guardians.indexOf(name),1);
-                    fireteam.splice(fireteam.indexOf(ic.user.id),1);
-                    if(alternatives.length > 0 && alternatives[0] !== "None."){
-                        const moveAlts = alts.splice(0,1);
-                        const moveGuardian = alternatives.splice(0,1);
-                        guardians.push(moveGuardian);
-                        fireteam.push(moveAlts);
-                    }
+                    return ic.reply({content: "You're already in this LFG.", ephemeral: true});
                 } else {
-                    return ic.reply({content: "You're not in this LFG.", ephemeral: true});
+                    const name = await this.resolveName(ic.guild, ic.user.id);
+                    alts.push(ic.user.id);
+                    if(alternatives[0] === "None."){
+                        alternatives[0] = name;
+                    } else {
+                        alternatives.push(name);
+                    }
                 }
-                newEmbed.addFields([{value: guardians.length > 0 ? guardians.join(", ") : "None.", name: `**Guardians Joined: ${guardians[0] !== "None." ? guardians.length : "0"}/${size}`, inline: true}]);
-                newEmbed.addFields([{value: alternatives.length > 0 ? alternatives.join(", ") : "None.", name: `**Alternatives**`, inline: true}]);
-                m.edit({embeds: [newEmbed]});
-                ic.deferUpdate();
-                posts.set(post.messageID,post);
-                bot.db.set(ic.guild.id,posts,"posts");
-            });
+            } else {
+                if(fireteam.includes(ic.user.id)){
+                    return ic.reply({content: "You're already in this LFG.", ephemeral: true});
+                } else {
+                    const name = await this.resolveName(ic.guild, ic.user.id);
+                    fireteam.push(ic.user.id);
+                    if(guardians[0] === "None."){
+                        guardians[0] = name;
+                    } else {
+                        guardians.push(name);
+                    }
+                }
+            }
+            newEmbed.addFields([{value: guardians.join(", "), name: `**Guardians Joined: ${guardians.length}/${size}**`, inline: true}]);
+            newEmbed.addFields([{value: alternatives.join(", "), name: `**Alternatives**`, inline: true}]);
+            m.edit({embeds: [newEmbed]});
+            ic.deferUpdate();
+            posts.set(post.messageID,post);
+            bot.db.set(ic.guild.id,posts,"posts");
+        } else if(action === "leave"){
+            if(alts.includes(ic.user.id)){
+                const index = alts.indexOf(ic.user.id);
+                alts.splice(index,1);
+                alternatives.splice(index,1);
+            } else if(fireteam.includes(ic.user.id)){
+                const index = fireteam.indexOf(ic.user.id);
+                guardians.splice(index,1);
+                fireteam.splice(index,1);
+                if(alternatives.length > 0 && alternatives[0] !== "None."){
+                    const moveAlts = alts.splice(0,1);
+                    const moveGuardian = alternatives.splice(0,1);
+                    guardians.push(moveGuardian);
+                    fireteam.push(moveAlts);
+                }
+            } else {
+                return ic.reply({content: "You're not in this LFG.", ephemeral: true});
+            }
+            newEmbed.addFields([{value: guardians.length > 0 ? guardians.join(", ") : "None.", name: `**Guardians Joined: ${guardians[0] !== "None." ? guardians.length : "0"}/${size}`, inline: true}]);
+            newEmbed.addFields([{value: alternatives.length > 0 ? alternatives.join(", ") : "None.", name: `**Alternatives**`, inline: true}]);
+            m.edit({embeds: [newEmbed]});
+            ic.deferUpdate();
+            posts.set(post.messageID,post);
+            bot.db.set(ic.guild.id,posts,"posts");
         } else if(action === "delete"){
             console.log(`${ic.user.tag} attempted deletion.`);
             if(ic.user.id !== ic.customId.split("-")[3] && !(ic.member.permissions.has(PermissionsBitField.resolve("ManageMessages"),true))) return ic.reply({content: "You aren't allowed to delete this post.", ephemeral: true});
             console.log(`${ic.user.tag} has the rights to delete.
 Is creator: ${ic.user.id === ic.customId.split("-")[3]}
 Has ManageMessages or Admin: ${ic.member.permissions.has(PermissionsBitField.resolve("ManageMessages"),true)}`);
-            ic.channel.messages.fetch(ic.customId.split("-")[2]).then(m => {
-                if(bot.db.get(ic.guild.id)[ic.customId.split("-")[2]] !== null){
-                    posts.delete(post.messageID);
-                    bot.db.set(ic.guild.id,posts,"posts");
-                }
-                m.delete().then(()=>{
-                    ic.reply({content: "Deleted.", ephemeral: true});
-                }).catch(e => console.log(e));
-            });
+            const m = ic.channel.messages.fetch(ic.customId.split("-")[2])
+            if(bot.db.get(ic.guild.id)[ic.customId.split("-")[2]] !== null){
+                posts.delete(post.messageID);
+                bot.db.set(ic.guild.id,posts,"posts");
+            }
+            m.delete().then(()=>{
+                ic.reply({content: "Deleted.", ephemeral: true});
+            }).catch(e => console.log(e));
         }
+    }
+
+    resolveName(guild,id){
+        return new Promise((res,rej)=>{
+            guild.members.fetch(id).then(member => {
+                res(member.nickname ?? member.user.tag);
+            }).catch(e => {
+                rej(e);
+            });
+        });
     }
 }
 module.exports = new Lfg();
