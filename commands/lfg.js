@@ -31,7 +31,7 @@ class Lfg extends require("../automation/commandClass"){
         });
     }
     exec(interaction,bot){
-        if(!(/#\d{4}/.test(interaction.displayName))) return interaction.reply({content: "You haven't changed your name to contain your Destiny name, in the format of Name#0000", ephemeral: true});
+        if(!(/#\d{4}/.test(interaction.member.displayName))) return interaction.reply({content: "You haven't changed your name to contain your Destiny name, in the format of Name#0000", ephemeral: true});
         if(interaction.options.getSubcommand() === "create"){
             const type = interaction.options.get("type").value;
             const activity = interaction.options.get("activity").value;
@@ -128,7 +128,7 @@ class Lfg extends require("../automation/commandClass"){
     }
 
     async handleLFG(ic, bot){
-        if(!(/#\d{4}/.test(ic.displayName))) return ic.reply({content: "You haven't changed your name to contain your Destiny name, in the format of Name#0000", ephemeral: true});
+        if(!(/#\d{4}/.test(ic.member.displayName))) return ic.reply({content: "You haven't changed your name to contain your Destiny name, in the format of Name#0000", ephemeral: true});
         const action = ic.customId.split("-")[1];
         const posts = bot.db.get(ic.guild.id).posts;
         const post = posts.get(ic.customId.split("-")[2]);
