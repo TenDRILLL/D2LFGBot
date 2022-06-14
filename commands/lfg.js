@@ -47,11 +47,11 @@ class Lfg extends require("../automation/commandClass"){
                 ]);
             interaction.showModal(modal);
         } else if(interaction.options.getSubcommand() === "edit"){
-
+            //Allow editing time or description. Anything else should be a new post.
         } else if(interaction.options.getSubcommand() === "join"){
-
+            //Only allow admins to do this.
         } else if(interaction.options.getSubcommand() === "leave"){
-
+            //Only allow admins to do this.
         }
     }
     autocomplete(interaction){
@@ -191,7 +191,7 @@ class Lfg extends require("../automation/commandClass"){
             } else {
                 return ic.reply({content: "You're not in this LFG.", ephemeral: true});
             }
-            newEmbed.addFields([{value: guardians.length > 0 ? guardians.join(", ") : "None.", name: `**Guardians Joined: ${guardians[0] !== "None." ? guardians.length : "0"}/${size}`, inline: true}]);
+            newEmbed.addFields([{value: guardians.length > 0 ? guardians.join(", ") : "None.", name: `**Guardians Joined: ${guardians[0] !== "None." ? guardians.length : "0"}/${size}**`, inline: true}]);
             newEmbed.addFields([{value: alternatives.length > 0 ? alternatives.join(", ") : "None.", name: `**Alternatives**`, inline: true}]);
             m.edit({embeds: [newEmbed]});
             ic.deferUpdate();
