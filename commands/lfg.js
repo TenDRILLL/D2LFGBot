@@ -139,7 +139,7 @@ class Lfg extends require("../automation/commandClass"){
                 const alternatives = lfgEmbed.fields.pop().value.split(", ");
                 const guardians = lfgEmbed.fields.pop().value.split(", ");
                 const newEmbed = EmbedBuilder.from(lfgEmbed);
-                if(guardians.length === 6){
+                if(guardians.length === size){
                     if(alts.includes(ic.user.id)){
                         return ic.reply({content: "You're already in this LFG.", ephemeral: true});
                     } else {
