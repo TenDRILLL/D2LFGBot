@@ -203,7 +203,6 @@ class Lfg extends require("../automation/commandClass"){
             console.log(`${ic.user.tag} has the rights to delete.
 Is creator: ${ic.user.id === ic.customId.split("-")[3]}
 Has ManageMessages or Admin: ${ic.member.permissions.has(PermissionsBitField.resolve("ManageMessages"),true)}`);
-            const m = ic.channel.messages.fetch(ic.customId.split("-")[2])
             if(bot.db.get(ic.guild.id)[ic.customId.split("-")[2]] !== null){
                 posts.delete(post.messageID);
                 bot.db.set(ic.guild.id,posts,"posts");
