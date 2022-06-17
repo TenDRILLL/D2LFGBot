@@ -47,11 +47,17 @@ class Lfg extends require("../automation/commandClass"){
                 ]);
             interaction.showModal(modal);
         } else if(interaction.options.getSubcommand() === "edit"){
-            //Allow editing time or description. Anything else should be a new post.
+            /*TODO: Implement this.
+            Allow editing time or description. Anything else should be a new post.
+            */
         } else if(interaction.options.getSubcommand() === "join"){
-            //Only allow admins to do this.
+            /*TODO: Implement this.
+            Only allow admins to do this.
+            */
         } else if(interaction.options.getSubcommand() === "leave"){
-            //Only allow admins to do this.
+            /*TODO: Implement this.
+            Only allow admins to do this.
+            */
         }
     }
     autocomplete(interaction){
@@ -87,10 +93,14 @@ class Lfg extends require("../automation/commandClass"){
 <t:${Math.floor(time.getTime()/1000)}:R>`, inline: true},
             {name: "**Description:**", value: interaction.fields.getTextInputValue("lfg-desc")},
             {name: `**Guardians Joined: 1/${size}**`, value: interaction.member.nickname ?? interaction.user.tag, inline: true},
-            {name: "**Alternatives:**", value: "None.", inline: true}
+            {name: "**Queue:**", value: "None.", inline: true}
         ]).setFooter({text: `Creator: ${interaction.member.nickname ?? interaction.user.tag}`});
         interaction.reply({embeds: [embed]}).then(async () => {
             const reply = await interaction.fetchReply();
+            const soloButton = new ButtonBuilder()
+                .setLabel("Join in Queue")
+                .setStyle(ButtonStyle.Primary)
+                .setCustomId(`lfg-join-${reply.id}`);
             const joinButton = new ButtonBuilder()
                 .setLabel("Join")
                 .setStyle(ButtonStyle.Success)
@@ -102,8 +112,8 @@ class Lfg extends require("../automation/commandClass"){
             const deleteButton = new ButtonBuilder()
                 .setLabel("Delete")
                 .setStyle(ButtonStyle.Danger)
-                .setCustomId(`lfg-delete-${reply.id}-${interaction.user.id}`)
-            const row = new ActionRowBuilder().setComponents([joinButton,leaveButton,deleteButton]);
+                .setCustomId(`lfg-delete-${reply.id}-${interaction.user.id}`);
+            const row = new ActionRowBuilder().setComponents([parseInt(size) === 1 ? soloButton : joinButton,leaveButton,deleteButton]);
             const embed = EmbedBuilder.from(reply.embeds[0]);
             embed.setFooter({text: `Creator: ${interaction.member.nickname ?? interaction.user.tag} | ID: ${reply.id}`});
             interaction.editReply({embeds: [embed], components: [row]}).then(()=>{
@@ -168,8 +178,22 @@ class Lfg extends require("../automation/commandClass"){
                 }
             }
             newEmbed.addFields([{value: guardians.join(", "), name: `**Guardians Joined: ${guardians.length}/${size}**`, inline: true}]);
-            newEmbed.addFields([{value: alternatives.join(", "), name: `**Alternatives**`, inline: true}]);
-            m.edit({embeds: [newEmbed]});
+            newEmbed.addFields([{value: alternatives.join(", "), name: `**Queue**`, inline: true}]);
+            const firstButton = ButtonBuilder.from(m.components[0].components[0].toJSON());
+            if(guardians.length === parseInt(size)){
+                firstButton
+                    .setLabel("Join in Queue")
+                    .setStyle(ButtonStyle.Primary)
+                    .setCustomId(`lfg-join-${post.messageID}`);
+            } else {
+                firstButton
+                    .setLabel("Join")
+                    .setStyle(ButtonStyle.Success)
+                    .setCustomId(`lfg-join-${post.messageID}`);
+            }
+            m.components[0].components.shift();
+            const actionRow = new ActionRowBuilder().setComponents([firstButton, ...m.components[0].components]);
+            m.edit({embeds: [newEmbed], components: [actionRow]});
             ic.deferUpdate();
             posts.set(post.messageID,post);
             bot.db.set(ic.guild.id,posts,"posts");
@@ -192,8 +216,22 @@ class Lfg extends require("../automation/commandClass"){
                 return ic.reply({content: "You're not in this LFG.", ephemeral: true});
             }
             newEmbed.addFields([{value: guardians.length > 0 ? guardians.join(", ") : "None.", name: `**Guardians Joined: ${guardians[0] !== "None." ? guardians.length : "0"}/${size}**`, inline: true}]);
-            newEmbed.addFields([{value: alternatives.length > 0 ? alternatives.join(", ") : "None.", name: `**Alternatives**`, inline: true}]);
-            m.edit({embeds: [newEmbed]});
+            newEmbed.addFields([{value: alternatives.length > 0 ? alternatives.join(", ") : "None.", name: `**Queue**`, inline: true}]);
+            const firstButton = ButtonBuilder.from(m.components[0].components[0].toJSON());
+            if(guardians.length === parseInt(size)){
+                firstButton
+                    .setLabel("Join in Queue")
+                    .setStyle(ButtonStyle.Primary)
+                    .setCustomId(`lfg-join-${post.messageID}`);
+            } else {
+                firstButton
+                    .setLabel("Join")
+                    .setStyle(ButtonStyle.Success)
+                    .setCustomId(`lfg-join-${post.messageID}`);
+            }
+            m.components[0].components.shift();
+            const actionRow = new ActionRowBuilder().setComponents([firstButton, ...m.components[0].components]);
+            m.edit({embeds: [newEmbed], components: [actionRow]});
             ic.deferUpdate();
             posts.set(post.messageID,post);
             bot.db.set(ic.guild.id,posts,"posts");
