@@ -47,20 +47,21 @@ module.exports.createTimers = (bot) => {
     bot.db.forEach(guild => {
         guild.posts.forEach(async post => {
             if(post.timestamp - new Date().getTime() <= 0) return;
-            const timer = setTimeout(()=>{
-                post.members.forEach(async user => {
+            const timer = setTimeout(async ()=>{
+                post = bot.db.get(post.guildID).posts.get(post.messageID);
+                post.members.forEach(user => {
                     bot.users.fetch(user).then(u => {
                         u.send({content: `Get ready for ${post.activity} <t:${Math.floor(post.timestamp/1000)}:R> with
 ${post.members.map(x => `<@${x}>`).join("\n")}
 Link to LFG: ${post.url}`}).catch(e => console.log(e));
                     });
-                    const message = await bot.channels.cache.get(post.channelID).messages.fetch(post.messageID).catch(e => console.log(e));
-                    if(message){
-                        message.edit({content: `Fireteam get ready!
-${post.members.map(x => `<@${x}>`).join(", ")}`});
-                    }
-                    timers.delete(post.messageID);
                 });
+                const message = await bot.channels.cache.get(post.channelID).messages.fetch(post.messageID).catch(e => console.log(e));
+                if(message){
+                    message.edit({content: `Fireteam get ready!
+${post.members.map(x => `<@${x}>`).join(", ")}`});
+                }
+                timers.delete(post.messageID);
             },post.timestamp - new Date().getTime() - (1000*60*10));
             timers.set(post.messageID, timer);
         });
@@ -69,20 +70,21 @@ ${post.members.map(x => `<@${x}>`).join(", ")}`});
 
 module.exports.createTimer = (post,bot) => {
     if(post.timestamp - new Date().getTime() <= 0) return;
-    const timer = setTimeout(()=>{
-        post.members.forEach(async user => {
+    const timer = setTimeout(async ()=>{
+        post = bot.db.get(post.guildID).posts.get(post.messageID);
+        post.members.forEach(user => {
             bot.users.fetch(user).then(u => {
                 u.send({content: `Get ready for ${post.activity} <t:${Math.floor(post.timestamp/1000)}:R> with
 ${post.members.map(x => `<@${x}>`).join("\n")}
 Link to LFG: ${post.url}`}).catch(e => console.log(e));
             });
-            const message = await bot.channels.cache.get(post.channelID).messages.fetch(post.messageID).catch(e => console.log(e));
-            if(message){
-                message.edit({content: `Fireteam get ready!
-${post.members.map(x => `<@${x}>`).join(", ")}`});
-            }
-            timers.delete(post.messageID);
         });
+        const message = await bot.channels.cache.get(post.channelID).messages.fetch(post.messageID).catch(e => console.log(e));
+        if(message){
+            message.edit({content: `Fireteam get ready!
+${post.members.map(x => `<@${x}>`).join(", ")}`});
+        }
+        timers.delete(post.messageID);
     },post.timestamp - new Date().getTime() - (1000*60*10));
     timers.set(post.messageID, timer);
 }
